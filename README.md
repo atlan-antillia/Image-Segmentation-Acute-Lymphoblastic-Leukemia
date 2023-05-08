@@ -15,7 +15,7 @@ The image dataset used here has been taken from the following web site.
 1. Acute Lymphoblastic Leukemia (ALL) image dataset
  https://www.kaggle.com/datasets/mehradaria/leukemia
 </pre>
-<pre>
+<p>
 If you use this dataset in your research, please credit the authors.
 Data Citation:
 Mehrad Aria, Mustafa Ghaderzadeh, Davood Bashash, Hassan Abolghasemi, Farkhondeh Asadi, and Azamossadat Hosseini, “Acute Lymphoblastic Leukemia (ALL) image dataset.” Kaggle, (2021). DOI: 10.34740/KAGGLE/DSV/2175623.
@@ -24,7 +24,7 @@ Publication Citation:
 Ghaderzadeh, M, Aria, M, Hosseini, A, Asadi, F, Bashash, D, Abolghasemi, 
 H. A fast and efficient CNN model for B-ALL diagnosis and its subtypes 
 classification using peripheral blood smear images. Int J Intell Syst. 2022; 37: 5113- 5133. doi:10.1002/int.22753
-</pre>
+</p>
 <p>
 See also:
 </p>
