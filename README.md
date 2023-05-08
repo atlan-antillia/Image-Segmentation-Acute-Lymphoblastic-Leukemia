@@ -4,7 +4,7 @@
 1 Image-Segmentation-Acute-Lymphoblastic-Leukemia
 </h2>
 <p>
-This is an experimental project for Image-Segmentation for Acute-Lymphoblastic-Leukemia by using
+This is an experimental project for Image-Segmentation of Acute-Lymphoblastic-Leukemia by using
 our <a href="https://github.com/atlan-antillia/Tensorflow-Slightly-Flexible-UNet">Tensorflow-Slightly-Flexible-UNet</a> Model.
 <br>
 
