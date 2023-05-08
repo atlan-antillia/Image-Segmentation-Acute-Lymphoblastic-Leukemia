@@ -49,7 +49,7 @@ import glob
 import traceback
 import numpy as np
 import cv2
-
+import tensorflow as tf
 from tensorflow.keras.layers import Lambda
 from tensorflow.keras.layers import Input
 
@@ -65,7 +65,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 from ConfigParser import ConfigParser
-#from NucleiDataset import NucleiDataset
+
 from EpochChangeCallback import EpochChangeCallback
 from GrayScaleImageWriter import GrayScaleImageWriter
 
@@ -93,14 +93,16 @@ class TensorflowUNet:
 
     self.optimizer = Adam(learning_rate = learning_rate, 
          beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, 
-         amsgrad=False) 
+         amsgrad=False)
+    #self.loss = "binary_crossentropy"
+   
 
     self.metrics = ["accuracy"]
-    self.model.compile(optimizer = self.optimizer, loss="binary_crossentropy", metrics = self.metrics)
+    self.model.compile(optimizer = self.optimizer, loss= "binary_crossentropy", metrics = self.metrics)
+
     show_summary = self.config.get(MODEL, "show_summary")
     if show_summary:
       self.model.summary()
-
 
   def create(self, num_classes, image_height, image_width, image_channels,
             base_filters = 16, num_layers = 5):
@@ -236,7 +238,7 @@ class TensorflowUNet:
     
 if __name__ == "__main__":
   try:
-    config_file    = "./model.config"
+    config_file    = "./train_eval_infer.config"
     config   = ConfigParser(config_file)
 
     width    = config.get(MODEL, "image_width")
@@ -248,16 +250,10 @@ if __name__ == "__main__":
     
     # Create a UNetMolde and compile
     model    = TensorflowUNet(config_file)
-    
-    """
-    resized_image     = (height, width, channels)
-    train_datapath    = "./stage1_train/"
-    dataset           = NucleiDataset(resized_image)
-
-    x_train, y_train  = dataset.create(train_datapath, has_mask=True)
-
-    model.train(x_train, y_train)
-    """
+    # Please download and install graphviz for your OS
+    # https://www.graphviz.org/download/ 
+    image_file = './asset/model.png'
+    tf.keras.utils.plot_model(model.model, to_file=image_file, show_shapes=True)
 
   except:
     traceback.print_exc()
