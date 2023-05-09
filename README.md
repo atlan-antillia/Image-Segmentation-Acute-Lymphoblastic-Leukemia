@@ -134,7 +134,6 @@ output_dir    = "./mini_test_output"
 We have also used Python <a href="./ALLDataset.py">ALLDataset.py</a> script to create
 train and test dataset from the original and segmented images specified by
 <b>image_datapath</b> and <b>mask_datapath </b> parameters in the configratration file.<br>
-
 The training process has just been stopped at epoch 50 by an early-stopping callback as shown below.<br><br>
 <img src="./asset/train_console_at_epoch_50_0510.png" width="720" height="auto"><br>
 <br>
