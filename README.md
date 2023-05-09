@@ -6,7 +6,6 @@
 This is an experimental project for Image-Segmentation of Acute-Lymphoblastic-Leukemia by using
 our <a href="https://github.com/atlan-antillia/Tensorflow-Slightly-Flexible-UNet">Tensorflow-Slightly-Flexible-UNet</a> Model.
 <br>
-
 </p>
 The image dataset used here has been taken from the following web site.
 </p>
