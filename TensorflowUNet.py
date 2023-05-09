@@ -69,6 +69,11 @@ from ConfigParser import ConfigParser
 from EpochChangeCallback import EpochChangeCallback
 from GrayScaleImageWriter import GrayScaleImageWriter
 
+import random
+seed           = 137
+random.seed    = seed
+np.random.seed = seed
+
 MODEL  = "model"
 TRAIN  = "train"
 BEST_MODEL_FILE = "best_model.h5"
@@ -96,10 +101,11 @@ class TensorflowUNet:
          amsgrad=False)
     #self.loss = "binary_crossentropy"
    
+    self.model_loaded = False
 
     self.metrics = ["accuracy"]
     self.model.compile(optimizer = self.optimizer, loss= "binary_crossentropy", metrics = self.metrics)
-
+   
     show_summary = self.config.get(MODEL, "show_summary")
     if show_summary:
       self.model.summary()
@@ -175,6 +181,23 @@ class TensorflowUNet:
                     validation_split=0.2, batch_size=batch_size, epochs=epochs, 
                     callbacks=[early_stopping, check_point, epoch_change],
                     verbose=1)
+  # 2023/05/09
+  def load_model(self) :
+    rc = False
+    if  not self.model_loaded:    
+      model_dir  = self.config.get(TRAIN, "model_dir")
+      weight_filepath = os.path.join(model_dir, BEST_MODEL_FILE)
+      if os.path.exists(weight_filepath):
+        self.model.load_weights(weight_filepath)
+        self.model_loaded = True
+        print("=== Loaded a weight_file {}".format(weight_filepath))
+        rc = True
+      else:
+        message = "Not found a weight_file " + weight_filepath
+        raise Exception(message)
+    else:
+      print("== Already loaded a weight file.")
+    return rc
 
   # 2023/05/05 Added newly.    
   def infer(self, input_dir, output_dir, expand=True):
@@ -204,14 +227,7 @@ class TensorflowUNet:
      
 
   def predict(self, images, expand=True):
-    model_dir  = self.config.get(TRAIN, "model_dir")
-
-    if not os.path.exists(model_dir):
-      raise Exception("Not found " + model_dir)
-    weight_filepath = os.path.join(model_dir, BEST_MODEL_FILE)
-
-    self.model.load_weights(weight_filepath)
-    print("=== Loaded weight_file {}".format(weight_filepath))
+    self.load_model()
     predictions = []
     for image in images:
       #print("=== Input image shape {}".format(image.shape))
@@ -223,14 +239,7 @@ class TensorflowUNet:
 
 
   def evaluate(self, x_test, y_test): 
-    model_dir  = self.config.get(TRAIN, "model_dir")
-
-    if not os.path.exists(model_dir):
-      raise Exception("Not found " + model_dir)
-    weight_filepath = os.path.join(model_dir, BEST_MODEL_FILE)
-
-    self.model.load_weights(weight_filepath)
-    print("=== Loaded weight_file {}".format(weight_filepath))
+    self.load_model()
     score = self.model.evaluate(x_test, y_test, verbose=1)
     print("Test loss    :{}".format(round(score[0], 4)))     
     print("Test accuracy:{}".format(round(score[1], 4)))

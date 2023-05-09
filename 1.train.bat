@@ -1,0 +1,2 @@
+python ./TensorflowUNetALLTrainer.py
+

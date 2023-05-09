@@ -1,4 +1,4 @@
-# Image-Segmentation-Acute-Lymphoblastic-Leukemia (Updated: 2023/05/08)
+# Image-Segmentation-Acute-Lymphoblastic-Leukemia (Updated: 2023/05/10)
 
 <h2>
 1 Image-Segmentation-Acute-Lymphoblastic-Leukemia
@@ -32,7 +32,12 @@ See also:
 2. U-Net: Convolutional Networks for Biomedical Image Segmentation
  https://arxiv.org/pdf/1505.04597.pdf
 </pre>
-
+<ul>
+<li>
+2023/05/10: Updated <a href="./TensorflowUNet.py">TensorflowUNet.py</a> and <a href="./ALLDataset.py">ALLDataset.py</a>.
+</li>
+</ul>
+<br>
 <h2>
 2 Prepare dataset
 </h2>
@@ -131,14 +136,14 @@ train and test dataset from the original and segmented images specified by
 <b>image_datapath</b> and <b>mask_datapath </b> parameters in the configratration file.<br>
 
 The training process has just been stopped at epoch 35 by an early-stopping callback as shown below.<br><br>
-<img src="./asset/train_console_at_epoch_35.png" width="720" height="auto"><br>
+<img src="./asset/train_console_at_epoch_50_0510.png" width="720" height="auto"><br>
 <br>
 <b>Train accuracies line graph</b>:<br>
-<img src="./asset/train_accuracies_35.png" width="720" height="auto"><br>
+<img src="./asset/train_accuracies_50.png" width="720" height="auto"><br>
 
 <br>
 <b>Train losses line graph</b>:<br>
-<img src="./asset/train_losses_35.png" width="720" height="auto"><br>
+<img src="./asset/train_losses_50.png" width="720" height="auto"><br>
 
 
 <h2>
@@ -151,9 +156,12 @@ in the following way.<br>
 <pre>
 >python TensorflowUNetALLEvaluator.py
 </pre>
+The evaluation result of this time is the following.<br>
+<img src="./asset/evaluate_console_at_epoch_50_0510.png" width="720" height="auto"><br>
+<br>
+This is slightly better than that of previous result as shown below.<br><br>
 
 <img src="./asset/evaluate_console_at_epoch_35.png" width="720" height="auto"><br>
-<br>
 
 
 <h2>

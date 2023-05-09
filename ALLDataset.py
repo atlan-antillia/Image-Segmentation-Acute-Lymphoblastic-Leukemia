@@ -35,7 +35,7 @@ class ALLDataset:
   def __init__(self, resized_image):
     self.IMG_WIDTH, self.IMG_HEIGHT, self.IMG_CHANNELS = resized_image
 
- 
+
   def create(self, original_data_path, segmented_data_path, category):
     image_files = glob.glob(original_data_path  + "/" + category + "/*.jpg")
     mask_files  = glob.glob(segmented_data_path + "/" + category + "/*.jpg")
@@ -46,7 +46,7 @@ class ALLDataset:
     Y = []
 
     X = np.zeros((num_images, self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), dtype=np.uint8)
-    Y = np.zeros((num_images, self.IMG_HEIGHT, self.IMG_WIDTH, 1                ), dtype=bool)
+    Y = np.zeros((num_images, self.IMG_HEIGHT, self.IMG_WIDTH, 1                ), dtype=np.bool)
 
     for n, image_file in tqdm(enumerate(image_files), total=len(image_files)):
     
@@ -57,16 +57,13 @@ class ALLDataset:
       image = resize(image, (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), mode='constant', preserve_range=True)
       X[n]  = image
 
-      mask  = imread(mask_file)
-      mask  = resize(mask, (self.IMG_HEIGHT, self.IMG_WIDTH, 1), mode='wrap', preserve_range=False, anti_aliasing=True)
-      #imshow(mask)
-      #plt.show()
-      #input("XX")
+      mask  = imread(mask_file) #, as_gray=True)
+      mask  = resize(mask, (self.IMG_HEIGHT, self.IMG_WIDTH, 1), mode='reflect', preserve_range=True, anti_aliasing=True)       
       Y[n]  = mask
 
     return X, Y
 
-
+    
 if __name__ == "__main__":
   try:
     resized_image = (256, 256, 3)
