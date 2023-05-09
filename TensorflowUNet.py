@@ -33,7 +33,7 @@ image_channels = 3
 num_classes    = 1
 base_filters   = 16
 num_layers     = 8
-dropout_rate   = 0.05
+dropout_rate   = 0.08
 learning_rate  = 0.001
 """
 
