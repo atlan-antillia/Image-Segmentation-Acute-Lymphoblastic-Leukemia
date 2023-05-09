@@ -1,5 +1,4 @@
 # Image-Segmentation-Acute-Lymphoblastic-Leukemia (Updated: 2023/05/10)
-
 <h2>
 1 Image-Segmentation-Acute-Lymphoblastic-Leukemia
 </h2>
