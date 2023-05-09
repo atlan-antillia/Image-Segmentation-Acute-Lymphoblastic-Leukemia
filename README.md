@@ -175,7 +175,7 @@ Please run the following command for Python script <a href="./TensorflowUNetALLI
 <img src="./asset/mini_test.png" width="1024" height="auto"><br>
 <br>
 <b>Infered images (mini_test_output)</b><br>
-Some violet stained elliptical cells in the original images of the mini_test dataset above have been detected as shown below.
+Some purple elliptical cells in the original images of the mini_test dataset above have been detected as shown below.
 <img src="./asset/mini_test_output.png" width="1024" height="auto"><br><br>
 
 <h2>
