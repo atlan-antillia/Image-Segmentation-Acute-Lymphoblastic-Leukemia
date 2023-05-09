@@ -167,21 +167,18 @@ This is slightly better than that of previous result as shown below.<br><br>
 <h2>
 5 Inference 
 </h2>
-We have also tried to infer segmented region for <b>mini_test</b> dataset, which is tiny
-image set extracted from <b>test</b> dataset,
-by using our Pretrained Acute-Lymphoblastic-Leukemia Model.<br>
-Please run the Python script <a href="./TensorflowUNetALLInfer.py">TensorflowUNetALLInfer.py</a> 
-in the following way.<br>
+We have also tried to infer the segmented region for <b>mini_test</b> dataset, which is a very small dataset including only ten images extracted from <b>test</b> dataset,
+ by using our Pretrained Acute-Lymphoblastic-Leukemia Model.<br>
+Please run the following command for Python script <a href="./TensorflowUNetALLInfer.py">TensorflowUNetALLInfer.py</a>.<br>
 <pre>
 >python TensorflowUNetALLInfer.py
 </pre>
-
 
 <b>Input images (mini_test) </b><br>
 <img src="./asset/mini_test.png" width="1024" height="auto"><br>
 <br>
 <b>Infered images (mini_test_output)</b><br>
-
+Some violet stained elliptical cells in the original images of the mini_test dataset above have been detected as shown below.
 <img src="./asset/mini_test_output.png" width="1024" height="auto"><br><br>
 
 <h2>
