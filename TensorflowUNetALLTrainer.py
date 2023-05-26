@@ -23,7 +23,7 @@
 
 
 import os
-
+import sys
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 os.environ["TF_ENABLE_GPU_GARBAGE_COLLECTION"]="false"
 
@@ -44,6 +44,14 @@ TRAIN  = "train"
 if __name__ == "__main__":
   try:
     config_file    = "./train_eval_infer.config"
+  
+    if len(sys.argv) == 2:
+      cfile = sys.argv[1]
+      if os.path.exists(cfile):
+        config_file = cfile
+      else:
+        raise Exception("Not found " + cfile)
+
     config   = ConfigParser(config_file)
 
     width    = config.get(MODEL, "image_width")

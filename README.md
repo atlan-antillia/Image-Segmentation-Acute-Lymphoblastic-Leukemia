@@ -1,4 +1,4 @@
-# Image-Segmentation-Acute-Lymphoblastic-Leukemia (Updated: 2023/05/10)
+# Image-Segmentation-Acute-Lymphoblastic-Leukemia (Updated: 2023/05/26)
 <h2>
 1 Image-Segmentation-Acute-Lymphoblastic-Leukemia
 </h2>
@@ -34,6 +34,12 @@ See also:
 <li>
 2023/05/10: Updated <a href="./TensorflowUNet.py">TensorflowUNet.py</a> and <a href="./ALLDataset.py">ALLDataset.py</a>.
 </li>
+<li>2023/05/24: Updated train_eval_inf.config file to be able to specify loss and metrcis functions.</li>
+
+<li>2023/05/24: Modified to write the merged (image+mask) inferred image files.</li>
+
+<li>2023/05/26: Updated ALLDataset to improve detection accuracy.</li>
+
 </ul>
 <br>
 <h2>
@@ -95,7 +101,7 @@ Please run the following command.<br>
 
 <pre>
 ; train_eval_infer.config
-; 2023/5/10 antillia.com
+; 2023/5/24 antillia.com
 
 [model]
 image_width    = 256
@@ -106,7 +112,9 @@ base_filters   = 16
 num_layers     = 6
 dropout_rate   = 0.08
 learning_rate  = 0.001
-show_summary   = True
+loss           = "binary_crossentropy"
+metrics        = ["binary_accuracy"]
+show_summary   = False
 
 [train]
 epochs        = 100
@@ -127,20 +135,37 @@ category       = "Early"
 [infer] 
 images_dir    = "./mini_test" 
 output_dir    = "./mini_test_output"
+merged_dir    = "./mini_test_output_merged"
+</pre>
+Since <pre>loss = "binary_crossentropy"</pre> and <pre>metrics = ["binary_accuracy"] </pre> are specified 
+in <b>train_eval_infer.config </b> file above,
+<b>binary_crossentropy</b> and <b>binary_accuracy</b> functions are used to compile our model as shown below.
+<pre>
+    # Read a loss function name from a config file, and eval it.
+    # loss = "binary_crossentropy"
+    self.loss  = eval(self.config.get(MODEL, "loss"))
 
+    # Read a list of metrics function names from a config file, and eval each of the list,
+    # metrics = ["binary_accuracy"]
+    metrics  = self.config.get(MODEL, "metrics")
+    self.metrics = []
+    for metric in metrics:
+      self.metrics.append(eval(metric))
+        
+    self.model.compile(optimizer = self.optimizer, loss= self.loss, metrics = self.metrics)
 </pre>
 We have also used Python <a href="./ALLDataset.py">ALLDataset.py</a> script to create
 train and test dataset from the original and segmented images specified by
 <b>image_datapath</b> and <b>mask_datapath </b> parameters in the configratration file.<br>
-The training process has just been stopped at epoch 50 by an early-stopping callback as shown below.<br><br>
-<img src="./asset/train_console_at_epoch_50_0510.png" width="720" height="auto"><br>
+The training process has just been stopped at epoch 54 by an early-stopping callback as shown below.<br><br>
+<img src="./asset/train_console_at_epoch_71_0527.png" width="720" height="auto"><br>
 <br>
-<b>Train accuracies line graph</b>:<br>
-<img src="./asset/train_accuracies_50.png" width="720" height="auto"><br>
+<b>Train metrics line graph</b>:<br>
+<img src="./asset/train_metrics_71_0527.png" width="720" height="auto"><br>
 
 <br>
 <b>Train losses line graph</b>:<br>
-<img src="./asset/train_losses_50.png" width="720" height="auto"><br>
+<img src="./asset/train_losses_71_0527.png" width="720" height="auto"><br>
 
 
 <h2>
@@ -154,12 +179,8 @@ in the following way.<br>
 >python TensorflowUNetALLEvaluator.py
 </pre>
 The evaluation result of this time is the following.<br>
-<img src="./asset/evaluate_console_at_epoch_50_0510.png" width="720" height="auto"><br>
+<img src="./asset/evaluate_console_at_epoch_71_0527.png" width="720" height="auto"><br>
 <br>
-This is slightly better than that of previous result as shown below.<br><br>
-
-<img src="./asset/evaluate_console_at_epoch_35.png" width="720" height="auto"><br>
-
 
 <h2>
 5 Inference 
@@ -174,9 +195,13 @@ Please run the following command for Python script <a href="./TensorflowUNetALLI
 <b>Input images (mini_test) </b><br>
 <img src="./asset/mini_test.png" width="1024" height="auto"><br>
 <br>
-<b>Infered images (mini_test_output)</b><br>
+<b>Inferred images (mini_test_output)</b><br>
 Some purple elliptical cells in the original images of the mini_test dataset above have been detected as shown below.
 <img src="./asset/mini_test_output.png" width="1024" height="auto"><br><br>
+
+<b>Merged inferred images (mini_test_output_merged)</b><br>
+Some purple elliptical cells in the original images of the mini_test dataset above have been detected as shown below.
+<img src="./asset/mini_test_output_merged.png" width="1024" height="auto"><br><br>
 
 <h2>
 Appendix

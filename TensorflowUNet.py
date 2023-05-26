@@ -38,28 +38,32 @@ learning_rate  = 0.001
 """
 
 import os
+import sys
 
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 os.environ["TF_ENABLE_GPU_GARBAGE_COLLECTION"]="false"
-os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+#os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
 import shutil
 import sys
 import glob
 import traceback
+import random
 import numpy as np
 import cv2
 import tensorflow as tf
+
 from tensorflow.keras.layers import Lambda
 from tensorflow.keras.layers import Input
 
-from tensorflow.keras.layers import Conv2D, Dropout, Conv2D, MaxPool2D
+from tensorflow.keras.layers import Conv2D, Dropout, Conv2D, MaxPool2D, BatchNormalization
 
 from tensorflow.keras.layers import Conv2DTranspose
 from tensorflow.keras.layers import concatenate
-from tensorflow.keras.activations import elu, relu
+from tensorflow.keras.activations import relu
 from tensorflow.keras import Model
-#from tensorflow.keras.losses import SparseCategoricalCrossentropy
+from tensorflow.keras.losses import  BinaryCrossentropy
+from tensorflow.keras.metrics import BinaryAccuracy, Accuracy
 #from tensorflow.keras.metrics import Mean
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -69,24 +73,32 @@ from ConfigParser import ConfigParser
 from EpochChangeCallback import EpochChangeCallback
 from GrayScaleImageWriter import GrayScaleImageWriter
 
-import random
-seed           = 137
-random.seed    = seed
-np.random.seed = seed
+from losses import dice_coef, basnet_hybrid_loss, sensitivity, specificity
+
+"""
+See: https://www.tensorflow.org/api_docs/python/tf/keras/metrics
+Module: tf.keras.metrics
+Functions
+"""
+
+"""
+See also: https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/keras/engine/training.py
+"""
 
 MODEL  = "model"
 TRAIN  = "train"
+INFER  = "infer"
 BEST_MODEL_FILE = "best_model.h5"
 
 class TensorflowUNet:
 
   def __init__(self, config_file):
+    self.set_seed()
+
     self.config    = ConfigParser(config_file)
     image_height   = self.config.get(MODEL, "image_height")
-
     image_width    = self.config.get(MODEL, "image_width")
     image_channels = self.config.get(MODEL, "image_channels")
-
     num_classes    = self.config.get(MODEL, "num_classes")
     base_filters   = self.config.get(MODEL, "base_filters")
     num_layers     = self.config.get(MODEL, "num_layers")
@@ -99,23 +111,50 @@ class TensorflowUNet:
     self.optimizer = Adam(learning_rate = learning_rate, 
          beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, 
          amsgrad=False)
-    #self.loss = "binary_crossentropy"
-   
+    
     self.model_loaded = False
 
-    self.metrics = ["accuracy"]
-    self.model.compile(optimizer = self.optimizer, loss= "binary_crossentropy", metrics = self.metrics)
+    # 2023/05/20 Modified to read loss and metrics from train_eval_infer.config file.
+    binary_crossentropy = tf.keras.metrics.binary_crossentropy
+    binary_accuracy     = tf.keras.metrics.binary_accuracy
+    accuracy            = Accuracy()
+    
+    # Default loss and metrics functions
+    self.loss    = binary_crossentropy
+    self.metrics = [binary_accuracy]
+    
+    # Read a loss function name from our config file, and eval it.
+    # loss = "binary_crossentropy"
+    self.loss  = eval(self.config.get(MODEL, "loss"))
+
+    # Read a list of metrics function names, ant eval each of the list,
+    # metrics = ["binary_accuracy"]
+    metrics  = self.config.get(MODEL, "metrics")
+    self.metrics = []
+    for metric in metrics:
+      self.metrics.append(eval(metric))
+    
+    print("--- loss    {}".format(self.loss))
+    print("--- metrics {}".format(self.metrics))
+    
+    self.model.compile(optimizer = self.optimizer, loss= self.loss, metrics = self.metrics)
    
     show_summary = self.config.get(MODEL, "show_summary")
     if show_summary:
       self.model.summary()
+
+  def set_seed(self, seed=137):
+    print("=== set seed {}".format(seed))
+    random.seed    = seed
+    np.random.seed = seed
+    tf.random.set_seed(seed)
 
   def create(self, num_classes, image_height, image_width, image_channels,
             base_filters = 16, num_layers = 5):
     # inputs
     print("Input image_height {} image_width {} image_channels {}".format(image_height, image_width, image_channels))
     inputs = Input((image_height, image_width, image_channels))
-    s= Lambda(lambda x: x / 255)(inputs)
+    s = Lambda(lambda x: x / 255)(inputs)
 
     # Encoder
     dropout_rate = self.config.get(MODEL, "dropout_rate")
@@ -128,6 +167,9 @@ class TensorflowUNet:
       c = Conv2D(filters, kernel_size, activation=relu, kernel_initializer='he_normal', padding='same')(s)
       c = Dropout(dropout_rate * i)(c)
       c = Conv2D(filters, kernel_size, activation=relu, kernel_initializer='he_normal',padding='same')(c)
+      #
+      c = Conv2D(filters, kernel_size, activation=relu, kernel_initializer='he_normal',padding='same')(c)
+
       if i < (num_layers-1):
         p = MaxPool2D(pool_size=pool_size)(c)
         s = p
@@ -148,6 +190,9 @@ class TensorflowUNet:
       u = Conv2D(filters, kernel_size, activation=relu, kernel_initializer='he_normal', padding='same')(u)
       u = Dropout(dropout_rate * f)(u)
       u = Conv2D(filters, kernel_size, activation=relu, kernel_initializer='he_normal',padding='same')(u)
+      #
+      u = Conv2D(filters, kernel_size, activation=relu, kernel_initializer='he_normal',padding='same')(u)
+
       c  = u
 
     # outouts
@@ -165,7 +210,11 @@ class TensorflowUNet:
     patience   = self.config.get(TRAIN, "patience")
     eval_dir   = self.config.get(TRAIN, "eval_dir")
     model_dir  = self.config.get(TRAIN, "model_dir")
-
+    metrics    = ["accuracy", "val_accuracy"]
+    try:
+      metrics    = self.config.get(TRAIN, "metrics")
+    except:
+      pass
     if os.path.exists(model_dir):
       shutil.rmtree(model_dir)
 
@@ -175,7 +224,7 @@ class TensorflowUNet:
 
     early_stopping = EarlyStopping(patience=patience, verbose=1)
     check_point    = ModelCheckpoint(weight_filepath, verbose=1, save_best_only=True)
-    epoch_change   = EpochChangeCallback(eval_dir)
+    epoch_change   = EpochChangeCallback(eval_dir, metrics)
 
     results = self.model.fit(x_train, y_train, 
                     validation_split=0.2, batch_size=batch_size, epochs=epochs, 
@@ -203,12 +252,24 @@ class TensorflowUNet:
   def infer(self, input_dir, output_dir, expand=True):
     writer       = GrayScaleImageWriter()
     # We are intereseted in png and jpg files.
-    # Sorry the bmp or tif files are ignored.
     image_files  = glob.glob(input_dir + "/*.png")
     image_files += glob.glob(input_dir + "/*.jpg")
+    image_files += glob.glob(input_dir + "/*.tif")
+    #2023/05/15 Added *.bmp files
+    image_files += glob.glob(input_dir + "/*.bmp")
 
     width        = self.config.get(MODEL, "image_width")
     height       = self.config.get(MODEL, "image_height")
+    # 2023/05/24
+    merged_dir   = None
+    try:
+      merged_dir = self.config.get(INFER, "merged_dir")
+      if os.path.exists(merged_dir):
+        shutil.rmtree(merged_dir)
+      if not os.path.exists(merged_dir):
+        os.makedirs(merged_dir)
+    except:
+      pass
 
     for image_file in image_files:
       basename = os.path.basename(image_file)
@@ -223,8 +284,15 @@ class TensorflowUNet:
       image       = prediction[0]    
       # Resize the predicted image to be the original image size (w, h), and save it as a grayscale image.
       # Probably, this is a natural way for all humans. 
-      writer.save_resized(image, (w, h), output_dir, name)
-     
+      mask = writer.save_resized(image, (w, h), output_dir, name)
+      # 2023/05/24
+      print("--- image_file {}".format(image_file))
+      if merged_dir !=None:
+        # Resize img to the original size (w, h)
+        img   = cv2.resize(img, (w, h))
+        img += mask
+        merged_file = os.path.join(merged_dir, basename)
+        cv2.imwrite(merged_file, img)
 
   def predict(self, images, expand=True):
     self.load_model()
@@ -246,8 +314,18 @@ class TensorflowUNet:
      
     
 if __name__ == "__main__":
+
   try:
+    # Default config_file
     config_file    = "./train_eval_infer.config"
+    # You can specify config_file on your command line parammeter.
+    if len(sys.argv) == 2:
+      cfile = sys.argv[1]
+      if not os.path.exists(cfile):
+         raise Exception("Not found " + cfile)
+      else:
+        config_file = cfile
+
     config   = ConfigParser(config_file)
 
     width    = config.get(MODEL, "image_width")

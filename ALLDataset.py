@@ -15,6 +15,7 @@
 
 # ALLDataset.py
 # 2023/05/10 to-arai
+# 2023/05/26 Modified to use opencv functions in create method.
 
 import os
 import sys
@@ -23,18 +24,14 @@ import numpy as np
 
 from tqdm import tqdm
 import glob
-# pip install scikit-image
-from skimage.transform import resize
-#from skimage.morphology import label
-from skimage.io import imread, imshow
 from matplotlib import pyplot as plt
 import traceback
+import cv2
 
 class ALLDataset:
 
   def __init__(self, resized_image):
     self.IMG_WIDTH, self.IMG_HEIGHT, self.IMG_CHANNELS = resized_image
-
 
   def create(self, original_data_path, segmented_data_path, category):
     image_files = glob.glob(original_data_path  + "/" + category + "/*.jpg")
@@ -53,14 +50,18 @@ class ALLDataset:
       basename  = os.path.basename(image_file)
       mask_file = segmented_data_path + "/" + category + "/" + basename
 
-      image = imread(image_file)
-      image = resize(image, (self.IMG_HEIGHT, self.IMG_WIDTH, self.IMG_CHANNELS), mode='constant', preserve_range=True)
+      image = cv2.imread(image_file, cv2.COLOR_BGR2RGB)
+      image = cv2.resize(image, dsize= (self.IMG_HEIGHT, self.IMG_WIDTH), interpolation=cv2.INTER_NEAREST)
       X[n]  = image
 
-      mask  = imread(mask_file) #, as_gray=True)
-      mask  = resize(mask, (self.IMG_HEIGHT, self.IMG_WIDTH, 1), mode='reflect', preserve_range=True, anti_aliasing=True)       
+      mask  = cv2.imread(mask_file)   
+      mask  = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+      mask  = cv2.resize(mask, dsize= (self.IMG_HEIGHT, self.IMG_WIDTH),   interpolation=cv2.INTER_NEAREST)
+      mask[mask<128] =   0  
+      mask[mask>128] = 255
+      mask  = np.expand_dims(mask, axis=-1)
+      
       Y[n]  = mask
-
     return X, Y
 
     

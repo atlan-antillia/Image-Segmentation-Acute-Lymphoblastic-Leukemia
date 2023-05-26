@@ -18,6 +18,7 @@
 
 
 import os
+import sys
 import shutil
 import cv2
 import glob
@@ -40,6 +41,13 @@ INFER  = "infer"
 if __name__ == "__main__":
   try:
     config_file    = "./train_eval_infer.config"
+    if len(sys.argv) == 2:
+      cfile = sys.argv[1]
+      if os.path.exists(cfile):
+        config_file = cfile
+      else:
+        raise Exception("Not found " + cfile)
+
     config     = ConfigParser(config_file)
 
     width      = config.get(MODEL, "image_width")
