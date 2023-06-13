@@ -228,6 +228,7 @@ class TensorflowUNet:
 
     results = self.model.fit(x_train, y_train, 
                     validation_split=0.2, batch_size=batch_size, epochs=epochs, 
+                    shuffle=False, #2024/06/13
                     callbacks=[early_stopping, check_point, epoch_change],
                     verbose=1)
   # 2023/05/09

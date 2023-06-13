@@ -1,4 +1,4 @@
-# Image-Segmentation-Acute-Lymphoblastic-Leukemia (Updated: 2023/05/26)
+# Image-Segmentation-Acute-Lymphoblastic-Leukemia (Updated: 2023/06/13)
 <h2>
 1 Image-Segmentation-Acute-Lymphoblastic-Leukemia
 </h2>
@@ -40,14 +40,51 @@ See also:
 
 <li>2023/05/26: Updated ALLDataset to improve detection accuracy.</li>
 
+<li>2023/06/13: Created ./projects/Acute-Lymphoblastic-Leukemia folder.</li>
+<li>2023/06/13: Modified to use ImageMaskDataset instead of ALLDatset.</li>
+
 </ul>
 <br>
 <h2>
-2 Prepare dataset
+2. Install Image-Segmentation of Acute-Lymphoblastic-Leukemia
+</h2>
+<h3>2.1 Clone repository</h3>
+Please clone Image-Segmentation-Acute-Lymphoblastic-Leukemia.git in the working folder <b>c:\google</b>.<br>
+<pre>
+>git clone https://github.com/atlan-antillia/Image-Segmentation-Acute-Lymphoblastic-Leukemia.git<br>
+</pre>
+You can see the following folder structure in Image-Segmentation-Acute-Lymphoblastic-Leukemia of the working folder.<br>
+
+<pre>
+Image-Segmentation-Acute-Lymphoblastic-Leukemia
+├─asset
+└─projects
+    └─Acute-Lymphoblastic-Leukemia
+        ├─ALL
+        │  ├─test
+        │  │  ├─original
+        │  │  │  └─Early
+        │  │  └─segmented
+        │  │      └─Early
+        │  └─train
+        │      ├─original
+        │      │  └─Early
+        │      └─segmented
+        │          └─Early
+        ├─eval
+        ├─mini_test
+        ├─mini_test_output
+        ├─mini_test_output_merged
+        └─models
+</pre>
+
+<br>
+<h2>
+3 Prepare dataset
 </h2>
 
 <h3>
-2.1 Download master dataset
+3.1 Download master dataset
 </h3>
  Please download the original dataset from the following link<br>
 <pre>
@@ -69,10 +106,10 @@ Acute-Lymphoblastic-Leukemia
 </pre>
  
 <h3>
-2.2 Split master dataset
+3.2 Split master dataset
 </h3>
 We have split Acute-Lymphoblastic-Leukemia dataset to <b>train</b> and <b>test</b> dataset 
-by using Python <a href="./split_master.py">split_master.py</a> script.
+by using Python <a href="./projects/Acute-Lymphoblastic-Leukemia/split_master.py">split_master.py</a> script.
 For simplicity, we have split <b>Early</b> category only.
 <pre>
 ALL
@@ -90,19 +127,23 @@ ALL
 
 
 <h2>
-3 Train TensorflowUNet Model
+4 Train TensorflowUNet Model
 </h2>
  We have trained Acute-Lymphoblastic-Leukemia TensorflowUNet Model by using the following
  <b>train_eval_infer.config</b> file. <br>
-Please run the following command.<br>
+Please run the following bat file.<br>
 <pre>
->python TensorflowUNetALLTrainer.py
+1.train.bat
+</pre>
+<pre>
+, which simply runs the following command.<br>
+python ../../TensorflowUNetTrainer.py train_eval_infer.config
 </pre>
 
 <pre>
 ; train_eval_infer.config
 ; 2023/5/24 antillia.com
-
+; 2023/06/13 Updated 
 [model]
 image_width    = 256
 image_height   = 256
@@ -112,6 +153,7 @@ base_filters   = 16
 num_layers     = 6
 dropout_rate   = 0.08
 learning_rate  = 0.001
+
 loss           = "binary_crossentropy"
 metrics        = ["binary_accuracy"]
 show_summary   = False
@@ -122,21 +164,28 @@ batch_size    = 4
 patience      = 10
 model_dir     = "./models"
 eval_dir      = "./eval"
-
-image_datapath = "./ALL/train/original/"
-mask_datapath  = "./ALL/train/segmented/"
-category       = "Early"
+metrics       = ["binary_accuracy", "val_binary_accuracy"]
+image_datapath = "./ALL/train/original/Early"
+mask_datapath  = "./ALL/train/segmented/Early"
+;category       = "Early"
 
 [eval]
-image_datapath = "./ALL/test/original/"
-mask_datapath  = "./ALL/test/segmented/"
-category       = "Early"
+image_datapath = "./ALL/test/original/Early"
+mask_datapath  = "./ALL/test/segmented/Early"
+;category       = "Early"
 
 [infer] 
 images_dir    = "./mini_test" 
 output_dir    = "./mini_test_output"
 merged_dir    = "./mini_test_output_merged"
+
+[mask]
+blur      = True
+binarize  = True
+threshold = 150
+
 </pre>
+
 Since <pre>loss = "binary_crossentropy"</pre> and <pre>metrics = ["binary_accuracy"] </pre> are specified 
 in <b>train_eval_infer.config </b> file above,
 <b>binary_crossentropy</b> and <b>binary_accuracy</b> functions are used to compile our model as shown below.
@@ -154,42 +203,50 @@ in <b>train_eval_infer.config </b> file above,
         
     self.model.compile(optimizer = self.optimizer, loss= self.loss, metrics = self.metrics)
 </pre>
-We have also used Python <a href="./ALLDataset.py">ALLDataset.py</a> script to create
+We have also used Python <a href="./ImageMaskDataset.py">ImageMaskDataset.py</a> script to create
 train and test dataset from the original and segmented images specified by
 <b>image_datapath</b> and <b>mask_datapath </b> parameters in the configratration file.<br>
-The training process has just been stopped at epoch 54 by an early-stopping callback as shown below.<br><br>
-<img src="./asset/train_console_at_epoch_71_0527.png" width="720" height="auto"><br>
+The training process has just been stopped at epoch 42 by an early-stopping callback as shown below.<br><br>
+<img src="./asset/train_console_at_epoch_42_0613.png" width="720" height="auto"><br>
 <br>
 <b>Train metrics line graph</b>:<br>
-<img src="./asset/train_metrics_71_0527.png" width="720" height="auto"><br>
+<img src="./asset/train_metrics_42.png" width="720" height="auto"><br>
 
 <br>
 <b>Train losses line graph</b>:<br>
-<img src="./asset/train_losses_71_0527.png" width="720" height="auto"><br>
+<img src="./asset/train_losses_42.png" width="720" height="auto"><br>
 
 
 <h2>
-4 Evaluation
+5 Evaluation
 </h2>
  We have evaluated prediction accuracy of our Pretrained Acute-Lymphoblastic-Leukemia Model by using <b>test</b> dataset.
 
-Please run the Python script <a href="./TensorflowUNetALLEvaluator.py">TensorflowUNetALLEvaluator.py</a> 
-in the following way.<br>
+Please move to ./projects/Acute-Lymphoblastic-Leukemia and run following bat file.<br>
 <pre>
->python TensorflowUNetALLEvaluator.py
+2.evaluate.bat
 </pre>
+, which simply runs the following command.<br>
+<pre>
+python TensorflowUNetEvaluator.py train_eval_infer.config
+</pre>
+
 The evaluation result of this time is the following.<br>
-<img src="./asset/evaluate_console_at_epoch_71_0527.png" width="720" height="auto"><br>
+<img src="./asset/evaluate_console_at_epoch_42_0613.png" width="720" height="auto"><br>
 <br>
 
 <h2>
-5 Inference 
+6 Inference 
 </h2>
 We have also tried to infer the segmented region for <b>mini_test</b> dataset, which is a very small dataset including only ten images extracted from <b>test</b> dataset,
  by using our Pretrained Acute-Lymphoblastic-Leukemia Model.<br>
-Please run the following command for Python script <a href="./TensorflowUNetALLInfer.py">TensorflowUNetALLInfer.py</a>.<br>
+Please move to ./projects/Acute-Lymphoblastic-Leukemia and run following bat file.<br>
 <pre>
->python TensorflowUNetALLInfer.py
+3.infer.bat
+</pre>
+, which simply runs the following command.
+<pre>
+>python TensorflowUNetInfer.py train_eval_infer.config
 </pre>
 
 <b>Input images (mini_test) </b><br>
