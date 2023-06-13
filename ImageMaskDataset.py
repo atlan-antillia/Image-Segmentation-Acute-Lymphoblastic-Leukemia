@@ -123,7 +123,6 @@ class ImageMaskDataset:
     return X, Y
 
 
-    
 if __name__ == "__main__":
   try:
     config_file = "./train_eval_infer.config"
